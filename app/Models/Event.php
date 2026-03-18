@@ -24,8 +24,10 @@ class Event extends Model
 
     public function progress(): float
     {
-        $bookedSeats = $this->bookings()->sum('seats_booked');
-
+        $bookedSeats = $this->bookings()
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->sum('seats_booked');
+        
         if ($this->capacity == 0) {
             return 0;
         }

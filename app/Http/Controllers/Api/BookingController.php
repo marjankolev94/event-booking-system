@@ -80,7 +80,10 @@ class BookingController extends Controller
             ];
         }
 
-        $seatsBooked = $event->bookings()->sum('seats_booked');
+        $seatsBooked = $event->bookings()
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->sum('seats_booked');
+        
         $availableSeats = $event->capacity - $seatsBooked;
 
         if ($requestedSeats > $availableSeats) {
