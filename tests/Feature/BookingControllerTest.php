@@ -90,6 +90,44 @@ class BookingControllerTest extends TestCase
     }
 
     /** 
+     * Test Booking creation fails because capacity of the seats for the Event is exceeded
+     */
+    public function test_booking_fails_if_event_capacity_exceeded()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        // Create event
+        $eventPayload = [
+            'name' => 'Limited Event',
+            'description' => 'Event with Limited Seats',
+            'start_date' => '2026-03-25 14:00:00',
+            'end_date' => '2026-03-25 17:00:00',
+            'capacity' => 5,
+        ];
+
+        $createEvent = $this->postJson('/api/events', $eventPayload);
+        $eventId = $createEvent->json('event.id');
+
+        // Create first booking (with 4 seats)
+        $this->postJson("/api/events/{$eventId}/bookings", [
+            'email_address' => 'marjankolev1994@yahoo.com',
+            'seats_booked' => 4
+        ]);
+
+        // Create second booking (exceed capacity: 4 + 2 > 5)
+        $response = $this->postJson("/api/events/{$eventId}/bookings", [
+            'email_address' => 'marjan_kolev1994@yahoo.com',
+            'seats_booked' => 2
+        ]);
+
+        $response->assertStatus(400)
+                ->assertJson([
+                    'error' => 'Booking exceeds available seats.'
+                ]);
+    }
+
+    /** 
      * Test status change of booking
      */
     public function test_booking_status_change()
